@@ -1,0 +1,16 @@
+# Raw and intermediate data are rebuilt by running the pipeline.
+# The one file the dashboard needs is kept, so the app runs straight after cloning.
+data/*
+!data/processed/
+data/processed/*
+!data/processed/predictions_48h.parquet
+
+# trained model files
+models/
+
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ipynb_checkpoints/
+.DS_Store

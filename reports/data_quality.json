@@ -1,0 +1,42 @@
+{
+  "rows_raw": 67031,
+  "duplicate_timestamps": 0,
+  "missing_intervals": 122,
+  "forecast_out_of_bounds": 0,
+  "actual_out_of_bounds": 0,
+  "spikes_flagged": 738,
+  "actual_imputed": 0,
+  "actual_still_missing": 127,
+  "weather_missing_rows": 242,
+  "date_range": [
+    "2022-12-31 23:30:00+00:00",
+    "2026-10-30 23:30:00+00:00"
+  ],
+  "rows_clean": 67153,
+  "eda": {
+    "corr_wind_intensity": -0.596,
+    "generation_corr": {
+      "gen_wind": -0.738,
+      "gen_solar": -0.258,
+      "gen_nuclear": -0.183,
+      "gen_imports": -0.037,
+      "gen_other": -0.021,
+      "gen_hydro": 0.169,
+      "gen_biomass": 0.223,
+      "gen_coal": 0.311,
+      "gen_gas": 0.975
+    },
+    "official_forecast": {
+      "MAE": 9.85,
+      "RMSE": 14.12,
+      "bias": -0.44
+    },
+    "mean_intensity": 132.4,
+    "by_season": {
+      "Autumn": 135.2,
+      "Spring": 127.6,
+      "Summer": 125.0,
+      "Winter": 143.1
+    }
+  }
+}
