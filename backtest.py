@@ -135,21 +135,45 @@ def write_results(summary: pd.DataFrame, origin_level: pd.DataFrame, test_range)
     (REPORTS / "results.md").write_text("\n".join(lines))
 
 
-def plot_savings(summary: pd.DataFrame) -> None:
-    scenarios = list(summary["scenario"].unique())
-    fig, axes = plt.subplots(1, len(scenarios), figsize=(5 * len(scenarios), 4), sharey=True)
-    axes = np.atleast_1d(axes)
-    for ax, sc in zip(axes, scenarios):
-        g = summary[(summary["scenario"] == sc) & summary["strategy"].isin(
-            ["window_mean", "naive_7d", "official_forecast", "lightgbm", "oracle"])]
-        for strat, gg in g.groupby("strategy", observed=True):
-            ax.plot(gg["window_h"], gg["saving_vs_immediate_pct"], marker="o", label=str(strat))
-        ax.set(title=sc, xlabel="Flexibility window (hours)")
-        ax.grid(alpha=.3)
-    axes[0].set_ylabel("Emissions saved vs starting immediately (%)")
-    axes[-1].legend(fontsize=8)
-    fig.tight_layout(); fig.savefig(FIGS / "10_savings_by_window.png", dpi=150); plt.close(fig)
+FIG_LABELS = {
+    "naive_7d": "Copy last week's pattern",
+    "official_forecast": "Grid operator's forecast (NESO)",
+    "lightgbm": "My LightGBM forecast",
+    "oracle": "Perfect hindsight (upper limit)",
+}
+FIG_COLOURS = {"naive_7d": "#9aa0a6", "official_forecast": "#3b73b9", "lightgbm": "#2e9e5b", "oracle": "#222222"}
+FIG_TITLES = {
+    "EV charge (4 h, 7 kW)": "Electric car charge (4 h, 7 kW)",
+    "Nightly ETL job (2 h, 5 kW)": "Nightly data job (2 h, 5 kW)",
+    "ML training run (6 h, 20 kW)": "Model training (6 h, 20 kW)",
+}
 
+
+def plot_savings(summary: pd.DataFrame) -> None:
+    wanted = list(FIG_TITLES)
+    scenarios = [s for s in wanted if s in set(summary["scenario"])]
+    scenarios += [s for s in summary["scenario"].unique() if s not in scenarios]
+    with plt.rc_context({"font.size": 13, "axes.titlesize": 15, "axes.labelsize": 13}):
+        fig, axes = plt.subplots(1, len(scenarios), figsize=(15, 5.4), sharey=True)
+        axes = np.atleast_1d(axes)
+        for ax, sc in zip(axes, scenarios):
+            for strat in FIG_LABELS:
+                g = summary[(summary["scenario"] == sc) & (summary["strategy"].astype(str) == strat)]
+                g = g.sort_values("window_h")
+                ax.plot(g["window_h"], g["saving_vs_immediate_pct"], marker="o", label=FIG_LABELS[strat],
+                        color=FIG_COLOURS[strat], lw=3.6 if strat == "lightgbm" else 2.2,
+                        ls="--" if strat == "oracle" else "-", zorder=3 if strat == "lightgbm" else 2)
+            ax.set_title(FIG_TITLES.get(sc, sc), fontweight="bold")
+            ax.set_xlabel("How long the job can wait (hours)")
+            ax.set_xticks(sorted(summary.loc[summary["scenario"] == sc, "window_h"].unique()))
+            ax.grid(alpha=0.3)
+        axes[0].set_ylabel("Less CO\u2082 than starting straight away (%)")
+        handles, labels = axes[0].get_legend_handles_labels()
+        fig.legend(handles, labels, loc="lower center", ncol=4, frameon=False, fontsize=12)
+        fig.suptitle("The longer a job can wait, the more CO\u2082 it saves", fontsize=18, fontweight="bold")
+        fig.tight_layout(rect=(0, 0.08, 1, 0.94))
+        fig.savefig(FIGS / "10_savings_by_window.png", dpi=200)
+        plt.close(fig)
 
 def main() -> None:
     ensure_dirs()
