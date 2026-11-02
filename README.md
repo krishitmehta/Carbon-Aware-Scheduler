@@ -19,9 +19,9 @@ I built this project to find out **how much CO₂ that would really save**, usin
 
 - I forecast Britain's carbon intensity 6 to 48 hours ahead with LightGBM, using public grid and weather data.
 - A scheduler uses the forecast to pick the cleanest start time for a job within the time it is allowed to wait.
-- I replayed about 730 past decisions for each setting over six months of unseen data (24 April to 24 October 2026) and measured the CO₂ using what actually happened.
-- With a 24-hour window, scheduling with my forecast cut the CO₂ of a 4-hour car charge by **33.8%** compared with starting straight away. Perfect hindsight would have cut it by 37.2%.
-- Across all three example jobs and all window lengths, the LightGBM schedules captured **between 87% and 92%** of the best possible saving.
+- I replayed about 730 past decisions for each setting over six months of unseen data (25 April to 25 October 2026) and measured the CO₂ using what actually happened.
+- With a 24-hour window, scheduling with my forecast cut the CO₂ of a 4-hour car charge by **33.4%** compared with starting straight away. Perfect hindsight would have cut it by 37.1%.
+- Across all three example jobs and all window lengths, the LightGBM schedules captured **between 86% and 91%** of the best possible saving.
 - The grid operator's own forecast is more accurate than my model (about half the error). The scheduling results are close anyway, and the gap is covered in detail below.
 
 ## Results at a glance
@@ -30,9 +30,9 @@ CO₂ for one run of each job, with a 24-hour window, averaged over about 730 re
 
 | Example job | Starting straight away | Scheduled with my LightGBM forecast | CO₂ saved | Best possible (perfect hindsight) | Share of best possible saving |
 |---|---|---|---|---|---|
-| Electric car charge (4 h, 7 kW) | 3.32 kg | 2.20 kg | **33.8%** | 37.2% | 90.9% |
-| Nightly data job (2 h, 5 kW) | 1.20 kg | 0.76 kg | **36.8%** | 41.3% | 89.0% |
-| Model training (6 h, 20 kW) | 14.34 kg | 10.06 kg | **29.8%** | 32.9% | 90.5% |
+| Electric car charge (4 h, 7 kW) | 3.31 kg | 2.21 kg | **33.4%** | 37.1% | 90.0% |
+| Nightly data job (2 h, 5 kW) | 1.20 kg | 0.76 kg | **36.4%** | 41.1% | 88.4% |
+| Model training (6 h, 20 kW) | 14.30 kg | 10.10 kg | **29.4%** | 32.8% | 89.5% |
 
 The three jobs are illustrative workloads, not measurements from real equipment. The longer a job can wait, the more it saves:
 
@@ -179,20 +179,20 @@ The score is the **average absolute error (MAE)** in g CO₂ per kWh. Lower is b
 
 | Model | 6 h ahead | 12 h ahead | 24 h ahead | 48 h ahead |
 |---|---|---|---|---|
-| **LightGBM** | **18.63** | **20.97** | **19.78** | **21.48** |
-| Ridge regression | 19.60 | 23.08 | 21.60 | 24.03 |
-| Official forecast (NESO) | 10.79 | 10.79 | 10.79 | 10.79 |
-| Same time yesterday | 37.24 | 37.24 | 37.24 | not available |
-| Same time last week | 46.37 | 46.37 | 46.37 | 46.37 |
+| **LightGBM** | **18.49** | **21.06** | **19.77** | **21.51** |
+| Ridge regression | 19.58 | 23.11 | 21.66 | 24.19 |
+| Official forecast (NESO) | 10.78 | 10.78 | 10.78 | 10.78 |
+| Same time yesterday | 37.14 | 37.14 | 37.14 | not available |
+| Same time last week | 46.24 | 46.24 | 46.24 | 46.24 |
 
 More detail for LightGBM:
 
 | Horizon | MAE | RMSE | Bias (positive means it predicts too high) |
 |---|---|---|---|
-| 6 hours | 18.63 | 23.48 | +5.06 |
-| 12 hours | 20.97 | 26.28 | +7.44 |
-| 24 hours | 19.78 | 25.04 | +7.23 |
-| 48 hours | 21.48 | 27.29 | +5.79 |
+| 6 hours | 18.49 | 23.44 | +5.06 |
+| 12 hours | 21.06 | 26.36 | +7.03 |
+| 24 hours | 19.77 | 25.01 | +7.24 |
+| 48 hours | 21.51 | 27.28 | +5.73 |
 
 What this shows:
 
@@ -259,28 +259,28 @@ Starting immediately and starting at a random time give almost the same CO₂ (w
 
 | Window the job can wait | 6 h | 12 h | 24 h | 48 h |
 |---|---|---|---|---|
-| Last week's pattern | 6.1% | 16.5% | 26.3% | 28.8% |
-| Official forecast (NESO) | 6.7% | 20.7% | 35.6% | 46.2% |
-| **LightGBM** | **6.6%** | **19.5%** | **33.8%** | **44.3%** |
-| Perfect hindsight | 7.3% | 21.8% | 37.2% | 48.2% |
+| Last week's pattern | 6.1% | 16.4% | 26.1% | 28.5% |
+| Official forecast (NESO) | 6.6% | 20.6% | 35.4% | 46.1% |
+| **LightGBM** | **6.6%** | **19.4%** | **33.4%** | **43.7%** |
+| Perfect hindsight | 7.3% | 21.7% | 37.1% | 48.1% |
 
 **Nightly data job (2 hours, 5 kW)**
 
 | Window the job can wait | 6 h | 12 h | 24 h | 48 h |
 |---|---|---|---|---|
-| Last week's pattern | 11.8% | 20.8% | 29.2% | 31.0% |
-| Official forecast (NESO) | 13.0% | 25.5% | 39.0% | 48.5% |
-| **LightGBM** | **12.9%** | **24.0%** | **36.8%** | **46.4%** |
-| Perfect hindsight | 14.9% | 27.7% | 41.3% | 51.3% |
+| Last week's pattern | 11.8% | 20.7% | 28.9% | 30.8% |
+| Official forecast (NESO) | 13.0% | 25.4% | 38.8% | 48.4% |
+| **LightGBM** | **13.0%** | **23.8%** | **36.4%** | **46.0%** |
+| Perfect hindsight | 14.9% | 27.6% | 41.1% | 51.2% |
 
 **Model training (6 hours, 20 kW)**
 
 | Window the job can wait | 12 h | 24 h | 48 h |
 |---|---|---|---|
-| Last week's pattern | 10.9% | 23.0% | 26.7% |
-| Official forecast (NESO) | 14.4% | 31.4% | 43.4% |
-| **LightGBM** | **13.6%** | **29.8%** | **41.4%** |
-| Perfect hindsight | 15.3% | 32.9% | 45.4% |
+| Last week's pattern | 10.8% | 22.8% | 26.5% |
+| Official forecast (NESO) | 14.4% | 31.3% | 43.3% |
+| **LightGBM** | **13.6%** | **29.4%** | **40.3%** |
+| Perfect hindsight | 15.2% | 32.8% | 45.3% |
 
 (A 6-hour job cannot be moved inside a 6-hour window, so there is no result for that case.)
 
@@ -288,12 +288,12 @@ Starting immediately and starting at a random time give almost the same CO₂ (w
 
 | Job | Forecast used | 6 h | 12 h | 24 h | 48 h |
 |---|---|---|---|---|---|
-| Car charge | LightGBM | 90.7% | 89.3% | 90.9% | 91.8% |
-| Car charge | Official (NESO) | 91.3% | 94.9% | 95.6% | 95.8% |
-| Nightly data job | LightGBM | 87.0% | 86.7% | 89.0% | 90.5% |
-| Nightly data job | Official (NESO) | 87.5% | 92.2% | 94.5% | 94.7% |
-| Model training | LightGBM | n/a | 89.1% | 90.5% | 91.1% |
-| Model training | Official (NESO) | n/a | 94.5% | 95.4% | 95.5% |
+| Car charge | LightGBM | 90.2% | 89.2% | 90.0% | 90.5% |
+| Car charge | Official (NESO) | 91.2% | 94.8% | 95.6% | 95.8% |
+| Nightly data job | LightGBM | 87.2% | 86.5% | 88.4% | 89.9% |
+| Nightly data job | Official (NESO) | 87.4% | 92.1% | 94.4% | 94.6% |
+| Model training | LightGBM | n/a | 89.1% | 89.5% | 89.0% |
+| Model training | Official (NESO) | n/a | 94.4% | 95.4% | 95.5% |
 
 How I read these results:
 
